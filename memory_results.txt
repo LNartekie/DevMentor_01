@@ -1,0 +1,30 @@
+MEMORY INVESTIGATION
+
+Test 1 — Full history
+
+User:
+My favorite programming language is Python.
+
+User:
+Explain interfaces.
+
+User:
+What is my favorite programming language?
+
+Result:
+AI: You mentioned earlier that your favorite programming language is Python. Is there anything specific you'd like to learn about Python or any problems you're trying to solve that you'd like some help with?
+
+
+Test 2 — History removed
+
+/reset
+
+User:
+What is my favorite programming language?
+
+Result:
+AI: Don't worry if you're not sure - we can figure it out together!
+
+To start, what kind of things do you like to do with code? Do you like building games, working with data, or creating websites? Sometimes, thinking about what you enjoy about programming can help us narrow down some options.
+
+Also, have you had a chance to try out any programming languages yet? Maybe we can go over some examples together to see if any of them feel like a good fit for you.
