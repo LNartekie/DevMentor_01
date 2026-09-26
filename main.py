@@ -14,6 +14,11 @@ messages = [
 while True:
     user_prompt = input("You: ").strip()
 
+    # Handle empty input
+    if not user_prompt:
+        print("Please enter a message.\n")
+        continue
+
     # Exit the program
     if user_prompt == "/exit":
         print("Goodbye!")
@@ -47,7 +52,7 @@ while True:
 
         continue
 
-    # Add the user's message to conversation history
+    # Add user message to conversation history
     messages.append(
         {
             "role": "user",
@@ -55,15 +60,39 @@ while True:
         }
     )
 
-    # Send the full conversation to Ollama
-    response = ollama.chat(
-        model="llama3.2",
-        messages=messages
-    )
+    try:
+        # Send the full conversation to Ollama
+        response = ollama.chat(
+            model="llama3.2",
+            messages=messages
+        )
 
-    ai_reply = response["message"]["content"]
+        ai_reply = response["message"]["content"]
 
-    # Save the assistant's response to conversation history
+    except ollama.ResponseError as error:
+        print(f"\nModel error: {error}")
+        print("Check that the selected Ollama model is installed.\n")
+
+        # Remove the failed user message from history
+        messages.pop()
+        continue
+
+    except Exception as error:
+        error_message = str(error).lower()
+
+        if "connection" in error_message or "refused" in error_message:
+            print(
+                "\nUnable to connect to Ollama. "
+                "Make sure Ollama is running and try again.\n"
+            )
+        else:
+            print(f"\nUnexpected error: {error}\n")
+
+        # Remove the failed user message from history
+        messages.pop()
+        continue
+
+    # Save successful assistant response
     messages.append(
         {
             "role": "assistant",
