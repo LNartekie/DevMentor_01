@@ -1,5 +1,7 @@
 import ollama
 
+from prompts import SYSTEM_PROMPT
+
 user_prompt = input("You: ")
 
 response = ollama.chat(
