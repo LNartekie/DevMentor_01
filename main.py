@@ -1,11 +1,16 @@
+import json
+import os
+from datetime import datetime
+
 import ollama
 
-from config import APP_NAME, DEFAULT_MODEL
+from config import APP_NAME, DEFAULT_MODEL, CONVERSATIONS_DIR
 from prompts import SYSTEM_PROMPT
 
 
 def build_initial_history():
     """Create a fresh conversation containing only the system prompt."""
+
     return [
         {
             "role": "system",
@@ -20,8 +25,6 @@ def select_model():
     try:
         response = ollama.list()
 
-        # Different versions of the Ollama Python package may return
-        # the model information slightly differently.
         if isinstance(response, dict):
             installed_models = response.get("models", [])
         else:
@@ -31,11 +34,9 @@ def select_model():
 
         for item in installed_models:
 
-            # Handle dictionary-style responses
             if isinstance(item, dict):
                 model_name = item.get("model") or item.get("name")
 
-            # Handle object-style responses
             else:
                 model_name = (
                     getattr(item, "model", None)
@@ -51,14 +52,15 @@ def select_model():
             f"\nUsing default model: {DEFAULT_MODEL}"
             f"\nDetails: {error}\n"
         )
+
         return DEFAULT_MODEL
 
-    # If Ollama returns no installed models
     if not models:
         print(
             "\nNo installed Ollama models were found."
             f"\nUsing default model: {DEFAULT_MODEL}\n"
         )
+
         return DEFAULT_MODEL
 
     print("\nAvailable models:")
@@ -71,11 +73,9 @@ def select_model():
         f"(press Enter for {DEFAULT_MODEL}): "
     ).strip()
 
-    # Pressing Enter selects the default model
     if not choice:
         return DEFAULT_MODEL
 
-    # Check that the selection is a valid number
     if choice.isdigit():
         choice_number = int(choice)
 
@@ -129,6 +129,80 @@ def display_history(messages):
         print(f"{number}. {role}: {content}\n")
 
 
+def save_conversation(messages):
+    """Save the current conversation history to a JSON file."""
+
+    os.makedirs(
+        CONVERSATIONS_DIR,
+        exist_ok=True
+    )
+
+    timestamp = datetime.now().strftime(
+        "%Y_%m_%d_%H%M%S"
+    )
+
+    filename = os.path.join(
+        CONVERSATIONS_DIR,
+        f"chat_{timestamp}.json"
+    )
+
+    with open(
+        filename,
+        "w",
+        encoding="utf-8"
+    ) as file:
+        json.dump(
+            messages,
+            file,
+            indent=2,
+            ensure_ascii=False
+        )
+
+    print(
+        f"Conversation saved to: {filename}\n"
+    )
+
+
+def load_conversation(filename):
+    """Load a previously saved conversation from a JSON file."""
+
+    # If the user only gives the filename,
+    # look inside the conversations folder.
+    if not os.path.dirname(filename):
+        filename = os.path.join(
+            CONVERSATIONS_DIR,
+            filename
+        )
+
+    if not os.path.exists(filename):
+        print(
+            f"Conversation file not found: {filename}\n"
+        )
+
+        return None
+
+    try:
+        with open(
+            filename,
+            "r",
+            encoding="utf-8"
+        ) as file:
+            messages = json.load(file)
+
+    except (json.JSONDecodeError, OSError) as error:
+        print(
+            f"Could not load conversation: {error}\n"
+        )
+
+        return None
+
+    print(
+        f"Conversation loaded from: {filename}\n"
+    )
+
+    return messages
+
+
 def chat_loop(model):
     """Run the main DevMentor conversation loop."""
 
@@ -157,7 +231,40 @@ def chat_loop(model):
             display_history(messages)
             continue
 
-        # Add the user's message to conversation history
+        # Save conversation
+        if user_prompt == "/save":
+            save_conversation(messages)
+            continue
+
+        # Load conversation
+        if user_prompt.startswith("/load "):
+            filename = user_prompt[6:].strip()
+
+            loaded_messages = load_conversation(
+                filename
+            )
+
+            if loaded_messages is not None:
+                messages = loaded_messages
+
+            continue
+
+        # Handle /load without a filename
+        if user_prompt == "/load":
+            print(
+                "Please provide a filename.\n"
+                "Example: /load chat_2026_09_27_140000.json\n"
+            )
+            continue
+
+        # Handle unknown commands
+        if user_prompt.startswith("/"):
+            print(
+                f"Unknown command: {user_prompt}\n"
+            )
+            continue
+
+        # Add the user's message to history
         messages.append(
             {
                 "role": "user",
@@ -166,7 +273,6 @@ def chat_loop(model):
         )
 
         try:
-            # Send conversation history to the selected model
             ai_reply = get_ai_response(
                 messages,
                 model
@@ -179,7 +285,6 @@ def chat_loop(model):
                 "is installed.\n"
             )
 
-            # Remove the failed user message
             messages.pop()
             continue
 
@@ -197,13 +302,14 @@ def chat_loop(model):
                 )
 
             else:
-                print(f"\nUnexpected error: {error}\n")
+                print(
+                    f"\nUnexpected error: {error}\n"
+                )
 
-            # Remove the failed user message
             messages.pop()
             continue
 
-        # Save the assistant's successful response
+        # Save the assistant's response
         messages.append(
             {
                 "role": "assistant",
@@ -218,7 +324,6 @@ def chat_loop(model):
 def main():
     """Start DevMentor."""
 
-    # Ask the user which installed model they want to use
     selected_model = select_model()
 
     print()
@@ -226,10 +331,16 @@ def main():
     print(APP_NAME)
     print(f"Model: {selected_model}")
     print("=" * 50)
-    print("Commands: /reset  /history  /exit")
+    print(
+        "Commands: "
+        "/reset  "
+        "/history  "
+        "/save  "
+        "/load <file>  "
+        "/exit"
+    )
     print()
 
-    # Start the chatbot using the selected model
     chat_loop(selected_model)
 
 
