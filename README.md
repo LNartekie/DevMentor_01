@@ -26,6 +26,9 @@ DevMentor includes the following features:
 - Handles Ollama connection problems
 - Organises code into reusable functions
 - Separates configuration, prompts, and application logic into different files
+- Allows the user to select an installed Ollama model at startup
+- Supports `/save` for saving conversations as JSON files
+- Supports `/load <filename>` for restoring saved conversations
 
 ---
 
@@ -228,7 +231,7 @@ Example:
 DevMentor AI Assistant
 Model: llama3.2
 ==================================================
-Commands: /reset  /history  /exit
+Commands: /reset  /history  /save  /load <file>  /exit
 
 You:
 ```
@@ -644,6 +647,146 @@ If the assistant response is not stored, the conversation history becomes incomp
 This could cause the model to lose important context, repeat information, or respond inconsistently.
 
 ---
+
+## Bonus Features
+
+Three optional bonus features were implemented to extend the functionality of DevMentor.
+
+### Bonus 1 - Model Selection
+
+At startup, DevMentor retrieves the Ollama models installed on the local computer and allows the user to choose which model should be used for the session.
+
+Example:
+
+```text
+Available models:
+
+1. qwen3:1.7b
+2. qwen:latest
+3. mistral:latest
+4. llama3.2:latest
+
+Select a model number (press Enter for llama3.2):
+```
+
+If the user presses Enter without making a selection, DevMentor uses the default model defined in `config.py`.
+
+This feature makes the application more flexible because different local models can be tested without modifying the Python source code.
+
+---
+
+### Bonus 2 - Save Conversations
+
+DevMentor supports the `/save` command.
+
+When the user enters:
+
+```text
+/save
+```
+
+the current conversation history is stored as a JSON file inside the `conversations` directory.
+
+Example:
+
+```text
+Conversation saved to:
+conversations\chat_2026_09_27_211500.json
+```
+
+The saved JSON file contains the system, user, and assistant messages from the current conversation.
+
+Example structure:
+
+```json
+[
+  {
+    "role": "system",
+    "content": "..."
+  },
+  {
+    "role": "user",
+    "content": "My favorite framework is Django."
+  },
+  {
+    "role": "assistant",
+    "content": "..."
+  }
+]
+```
+
+Saving the `messages` list makes it possible to preserve the conversation after the Python application has been closed.
+
+---
+
+### Bonus 3 - Load Conversations
+
+DevMentor supports the `/load` command for restoring a previously saved conversation.
+
+Example:
+
+```text
+/load chat_2026_09_27_211500.json
+```
+
+When a conversation is loaded, the saved messages are placed back into the application's `messages` list.
+
+The `/history` command can then be used to confirm that the earlier messages have been restored.
+
+This was tested by first entering:
+
+```text
+My favorite framework is Django.
+```
+
+The conversation was saved and the application was closed.
+
+After restarting DevMentor, the saved JSON conversation was loaded. The restored conversation history contained the earlier statement about Django.
+
+When asked:
+
+```text
+Based on our earlier conversation, what framework did I say was my favorite?
+```
+
+DevMentor responded that Django was the favorite framework.
+
+This demonstrates that the model did not permanently remember the information. Instead, the Python application restored the saved conversation state and sent the earlier context back to the language model.
+
+---
+
+## Available Commands
+
+DevMentor supports the following commands:
+
+| Command | Purpose |
+|---|---|
+| `/reset` | Clears the current conversation while keeping the system prompt |
+| `/history` | Displays user and assistant conversation history |
+| `/save` | Saves the current conversation to a JSON file |
+| `/load <filename>` | Loads a previously saved conversation |
+| `/exit` | Ends the program cleanly |
+
+---
+
+## Updated Project Structure
+
+```text
+devmentor/
+│
+├── main.py
+├── config.py
+├── prompts.py
+├── requirements.txt
+├── README.md
+├── experiment_results.txt
+├── memory_results.txt
+├── conversations/
+│   └── chat_YYYY_MM_DD_HHMMSS.json
+└── .venv/
+```
+
+The `conversations` directory is created automatically when the `/save` command is used.
 
 ## Key Learning
 

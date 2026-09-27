@@ -1,0 +1,22 @@
+[
+  {
+    "role": "system",
+    "content": "\nYou are a programming tutor for junior developers.\n\nFollow these rules:\n1. Explain the concept in plain English before showing code.\n2. Keep the introduction to no more than two sentences.\n3. Use Python for code examples unless another language is requested.\n4. Keep examples short and directly related to the question.\n5. Do not introduce unrelated concepts unless the user asks.\n6. If you are unsure, clearly say that you are not certain.\n"
+  },
+  {
+    "role": "user",
+    "content": "My favorite database is PostgreSQL."
+  },
+  {
+    "role": "assistant",
+    "content": "PostgreSQL is a powerful open-source relational database management system (RDBMS) known for its reliability, scalability, and robust support for advanced features like ACID compliance, JSON support, and transaction management. It’s widely used in web applications and data-driven projects.  \n\nHere’s a simple Python example to connect to PostgreSQL and retrieve data:  \n```python\nimport psycopg2\n\n# Connect to the PostgreSQL database\nconn = psycopg2.connect(\"dbname=mydb user=myuser password=mysecret\")\n\n# Create a cursor object\ncur = conn.cursor()\n\n# Execute a query\ncur.execute(\"SELECT * FROM users LIMIT 10\")\n\n# Fetch results\nrows = cur.fetchall()\nprint(rows)\n\n# Close the connection\nconn.close()\n```\n\nNote: Replace `mydb`, `myuser`, and `mysecret` with your actual database credentials. This example assumes you’ve installed `psycopg2` via `pip install psycopg2`. Let me know if you need help with specific tasks like querying or data manipulation!"
+  },
+  {
+    "role": "user",
+    "content": "Explain primary keys."
+  },
+  {
+    "role": "assistant",
+    "content": "A **primary key** is a unique value assigned to each row in a table to ensure that no duplicate rows exist. It acts as a \"unique identifier\" for each record, helping to prevent data inconsistency and ensuring that each row is distinguishable. \n\nFor example, in a table of students, a `student_id` column could be the primary key, ensuring each student has a unique number. This helps databases manage data efficiently and maintain integrity. \n\nIf you'd like an example in code, I can show how to create a table with a primary key!"
+  }
+]
